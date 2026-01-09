@@ -4,16 +4,23 @@ import { useEffect, useState } from "react";
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState("all"); // 🔹 FILTER STATE
 
-  // GET tasks
+  // 🔹 Edit states
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+
+  // 🔹 Filter state
+  const [filter, setFilter] = useState("all");
+
+  // 🔹 GET tasks
   useEffect(() => {
     fetch("http://localhost:5000/api/tasks")
       .then((res) => res.json())
-      .then((data) => setTasks(data));
+      .then((data) => setTasks(data))
+      .catch((err) => console.error(err));
   }, []);
 
-  // ADD task
+  // 🔹 ADD task
   const addTask = () => {
     if (title.trim() === "") return;
 
@@ -29,10 +36,14 @@ function App() {
       });
   };
 
-  // COMPLETE task
-  const completeTask = (id) => {
-    fetch(`http://localhost:5000/api/tasks/${id}`, {
+  // 🔹 COMPLETE task (explicit value send)
+  const completeTask = (task) => {
+    fetch(`http://localhost:5000/api/tasks/${task._id}`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        completed: !task.completed,
+      }),
     })
       .then((res) => res.json())
       .then((updatedTask) => {
@@ -44,13 +55,39 @@ function App() {
       });
   };
 
-  // DELETE task
+  // 🔹 DELETE task
   const deleteTask = (id) => {
     fetch(`http://localhost:5000/api/tasks/${id}`, {
       method: "DELETE",
     }).then(() => {
       setTasks(tasks.filter((t) => t._id !== id));
     });
+  };
+
+  // 🔹 OPEN EDIT MODAL
+  const openEdit = (task) => {
+    setEditingTask(task);
+    setEditTitle(task.title);
+  };
+
+  // 🔹 SAVE EDIT (title update)
+  const saveEdit = () => {
+    if (!editTitle.trim()) return;
+
+    fetch(`http://localhost:5000/api/tasks/${editingTask._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: editTitle }),
+    })
+      .then((res) => res.json())
+      .then((updatedTask) => {
+        setTasks(
+          tasks.map((t) =>
+            t._id === updatedTask._id ? updatedTask : t
+          )
+        );
+        setEditingTask(null);
+      });
   };
 
   return (
@@ -82,8 +119,11 @@ function App() {
           .map((task) => (
             <li key={task._id}>
               {task.title} — {task.completed ? "✅" : "❌"}{" "}
-              <button onClick={() => completeTask(task._id)}>
+              <button onClick={() => completeTask(task)}>
                 Complete
+              </button>{" "}
+              <button onClick={() => openEdit(task)}>
+                Edit
               </button>{" "}
               <button onClick={() => deleteTask(task._id)}>
                 Delete
@@ -91,6 +131,25 @@ function App() {
             </li>
           ))}
       </ul>
+
+      {/* 🔹 EDIT MODAL */}
+      {editingTask && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Edit Task</h3>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+            />
+            <br />
+            <button onClick={saveEdit}>Save</button>{" "}
+            <button onClick={() => setEditingTask(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

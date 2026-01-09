@@ -41,30 +41,31 @@ app.get("/api/tasks", async (req, res) => {
 
 
 // COMPLETE / UNCOMPLETE task  ✅
+// UPDATE task (edit title OR toggle completed)
 app.put("/api/tasks/:id", async (req, res) => {
   try {
+    const { title, completed } = req.body;
+
     const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    task.completed = !task.completed;
-    await task.save();
+    // 🔹 Update title if provided
+    if (title !== undefined) {
+      task.title = title;
+    }
 
-    res.json(task);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+    // 🔹 Toggle completed if not explicitly provided
+    if (completed !== undefined) {
+      task.completed = completed;
+    }
 
-// DELETE task
-app.delete("/api/tasks/:id", async (req, res) => {
-  try {
-    await Task.findByIdAndDelete(req.params.id);
-    res.json({ message: "Task deleted" });
+    const updatedTask = await task.save();
+    res.json(updatedTask);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
