@@ -1,5 +1,6 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+const API_URL = process.env.REACT_APP_API_URL;
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -14,7 +15,8 @@ function App() {
 
   // 🔹 GET tasks
   useEffect(() => {
-    fetch("http://localhost:5000/api/tasks")
+    fetch(`${process.env.REACT_APP_API_URL}/api/tasks`)
+
       .then((res) => res.json())
       .then((data) => setTasks(data))
       .catch((err) => console.error(err));
@@ -24,7 +26,7 @@ function App() {
   const addTask = () => {
     if (title.trim() === "") return;
 
-    fetch("http://localhost:5000/api/tasks", {
+    fetch(`${API_URL}/api/tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
@@ -38,7 +40,7 @@ function App() {
 
   // 🔹 COMPLETE task (explicit value send)
   const completeTask = (task) => {
-    fetch(`http://localhost:5000/api/tasks/${task._id}`, {
+    fetch(`${API_URL}/api/tasks/${task._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -57,7 +59,7 @@ function App() {
 
   // 🔹 DELETE task
   const deleteTask = (id) => {
-    fetch(`http://localhost:5000/api/tasks/${id}`, {
+    fetch(`${API_URL}/api/tasks/${id}`, {
       method: "DELETE",
     }).then(() => {
       setTasks(tasks.filter((t) => t._id !== id));
@@ -74,7 +76,7 @@ function App() {
   const saveEdit = () => {
     if (!editTitle.trim()) return;
 
-    fetch(`http://localhost:5000/api/tasks/${editingTask._id}`, {
+    fetch(`${API_URL}/api/tasks/${editingTask._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: editTitle }),
