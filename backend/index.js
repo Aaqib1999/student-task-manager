@@ -6,6 +6,7 @@ const cors = require("cors");
 
 const app = express();
 
+// 🔹 MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected ✅"))
@@ -14,11 +15,12 @@ mongoose
 app.use(cors());
 app.use(express.json());
 
-// test route
+// 🔹 Test route
 app.get("/", (req, res) => {
   res.send("Server is running 🚀");
 });
-// ADD task
+
+// 🔹 ADD task
 app.post("/api/tasks", async (req, res) => {
   try {
     const task = await Task.create(req.body);
@@ -28,8 +30,7 @@ app.post("/api/tasks", async (req, res) => {
   }
 });
 
-
-// GET all tasks
+// 🔹 GET all tasks
 app.get("/api/tasks", async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
@@ -39,28 +40,18 @@ app.get("/api/tasks", async (req, res) => {
   }
 });
 
-
-// COMPLETE / UNCOMPLETE task  ✅
-// UPDATE task (edit title OR toggle completed)
+// 🔹 UPDATE task (edit title / complete toggle)
 app.put("/api/tasks/:id", async (req, res) => {
   try {
     const { title, completed } = req.body;
 
     const task = await Task.findById(req.params.id);
-
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // 🔹 Update title if provided
-    if (title !== undefined) {
-      task.title = title;
-    }
-
-    // 🔹 Toggle completed if not explicitly provided
-    if (completed !== undefined) {
-      task.completed = completed;
-    }
+    if (title !== undefined) task.title = title;
+    if (completed !== undefined) task.completed = completed;
 
     const updatedTask = await task.save();
     res.json(updatedTask);
@@ -69,8 +60,22 @@ app.put("/api/tasks/:id", async (req, res) => {
   }
 });
 
+// 🔹 DELETE task (THIS WAS MISSING – NOW FIXED ✅)
+app.delete("/api/tasks/:id", async (req, res) => {
+  try {
+    const deletedTask = await Task.findByIdAndDelete(req.params.id);
 
-// SERVER START (LAST LINE ONLY)
+    if (!deletedTask) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    res.json({ message: "Task deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// 🔹 SERVER START
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
